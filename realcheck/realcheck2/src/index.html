@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Realcheck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080C12;
+      --bg2: #0D1320;
+      --bg3: #111827;
+      --border: #1A2538;
+      --border2: #243044;
+      --blue: #4D9FFF;
+      --green: #00D68F;
+      --green-dim: #00291A;
+      --amber: #F5A623;
+      --amber-dim: #3D2800;
+      --red: #FF4D6A;
+      --red-dim: #3D0010;
+      --text: #E2EAF4;
+      --text2: #8B9BB4;
+      --text3: #3D506A;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* ── Layout ── */
+    #shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg);
+    }
+
+    .titlebar {
+      -webkit-app-region: drag;
+      height: 38px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      width: 22px; height: 22px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 700; color: #080C12;
+      -webkit-app-region: no-drag;
+    }
+
+    .appname {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 600;
+      color: var(--text2);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .pill {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 5px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 10px; color: var(--text2); font-weight: 500;
+      -webkit-app-region: no-drag;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .pill:hover { border-color: var(--blue); color: var(--blue); }
+
+    .pulse {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green);
+      animation: glow 2s ease-in-out infinite;
+    }
+    @keyframes glow { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left: Input ── */
+    .left {
+      padding: 20px;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 12px;
+      overflow: hidden;
+    }
+
+    .field-label {
+      font-size: 10px; font-weight: 500;
+      color: var(--blue);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    #rinput {
+      flex: 1;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; line-height: 1.7;
+      resize: none; outline: none;
+      transition: border-color .2s;
+      user-select: text;
+    }
+    #rinput:focus { border-color: var(--border2); }
+    #rinput::placeholder { color: var(--text3); }
+
+    .leftfoot {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .ccount { font-size: 11px; color: var(--text3); }
+
+    #abtn {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--blue);
+      color: #080C12;
+      border: none; border-radius: 9px;
+      padding: 9px 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, transform .1s, opacity .15s;
+      letter-spacing: .02em;
+    }
+    #abtn:hover { background: #6BB3FF; }
+    #abtn:active { transform: scale(.97); }
+    #abtn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    /* ── Right: Results ── */
+    .right {
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── States ── */
+    .state { display: none; }
+    .state.active { display: flex; }
+
+    /* Idle */
+    #state-idle {
+      flex: 1; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; padding: 20px;
+    }
+    .idle-ring {
+      width: 56px; height: 56px;
+      border: 1.5px solid var(--border2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text3); font-size: 22px;
+    }
+    .idle-hint { font-size: 12px; color: var(--text3); text-align: center; line-height: 1.7; }
+
+    /* Scanning */
+    #state-scanning {
+      flex: 1; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; padding: 20px;
+    }
+    .scan-outer { position: relative; width: 72px; height: 72px; }
+    .scan-outer svg { animation: spin 2s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scan-inner {
+      position: absolute; inset: 12px;
+      border-radius: 50%; border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--blue); font-size: 16px;
+    }
+    .scan-txt { font-size: 10px; font-weight: 500; color: var(--blue); letter-spacing: .12em; text-transform: uppercase; }
+    .dots span {
+      display: inline-block; width: 4px; height: 4px;
+      border-radius: 50%; background: var(--blue); margin: 0 2px;
+      animation: dp 1.4s ease-in-out infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: .2s; }
+    .dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dp { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
+
+    /* Results */
+    #state-results {
+      flex-direction: column; gap: 0; padding: 0;
+    }
+
+    .meter-section {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      gap: 4px;
+    }
+
+    .score-row { display: flex; align-items: baseline; gap: 3px; }
+    .score-big { font-family: 'Space Grotesk', sans-serif; font-size: 48px; font-weight: 700; line-height: 1; }
+    .score-unit { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 500; color: var(--text2); }
+    .score-sub { font-size: 11px; color: var(--text3); }
+
+    .vbadge {
+      display: inline-flex; align-items: center; gap: 5px;
+      border-radius: 20px; padding: 4px 11px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+      width: fit-content;
+    }
+
+    .signals-wrap {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .slabel { font-size: 10px; font-weight: 500; color: var(--text2); letter-spacing: .1em; text-transform: uppercase; }
+
+    .sig {
+      display: flex; align-items: flex-start; gap: 9px;
+      font-size: 12px; line-height: 1.55;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--border);
+      opacity: 0; transform: translateY(5px);
+      animation: fadein .35s forwards;
+    }
+    .sig:last-child { border-bottom: none; padding-bottom: 0; }
+    @keyframes fadein { to { opacity:1; transform:none; } }
+
+    .sdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .stxt { color: var(--text2); }
+    .stxt strong { color: var(--text); font-weight: 500; }
+
+    .sum-wrap { padding: 14px 16px; }
+    .sumbox {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 12px 14px;
+      font-size: 12px; color: var(--text2); line-height: 1.75;
+    }
+
+    .reset-wrap { padding: 0 16px 16px; }
+    #rbtn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 9px;
+      color: var(--text2);
+      padding: 9px; font-size: 12px;
+      cursor: pointer; width: 100%;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .15s, color .15s;
+    }
+    #rbtn:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ── API key modal ── */
+    #modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(8,12,18,.85);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    #modal-bg.open { display: flex; }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      width: 380px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px; font-weight: 600; color: var(--text);
+    }
+    .modal-desc { font-size: 12px; color: var(--text2); line-height: 1.65; }
+    .modal-desc a { color: var(--blue); text-decoration: none; }
+
+    #apikey-input {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; outline: none; width: 100%;
+      transition: border-color .2s;
+      user-select: text;
+    }
+    #apikey-input:focus { border-color: var(--blue); }
+    #apikey-input::placeholder { color: var(--text3); }
+
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-sec {
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text2);
+      padding: 8px 16px; font-size: 13px;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: color .15s;
+    }
+    .btn-sec:hover { color: var(--text); }
+    .btn-pri {
+      background: var(--blue); border: none;
+      border-radius: 8px; color: #080C12;
+      padding: 8px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+      transition: background .15s;
+    }
+    .btn-pri:hover { background: #6BB3FF; }
+
+    .err { font-size: 11px; color: var(--red); display: none; }
+  </style>
+</head>
+<body>
+
+<div id="shell">
+  <div class="titlebar">
+    <div class="logo">R</div>
+    <span class="appname">Realcheck</span>
+    <div class="pill" id="settings-btn">
+      <div class="pulse"></div>
+      API Key
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <span class="field-label">Resume text</span>
+      <textarea id="rinput" placeholder="Paste the full resume here — the more text, the more accurate the analysis."></textarea>
+      <div class="leftfoot">
+        <span class="ccount" id="ccount">0 characters</span>
+        <button id="abtn">Analyze →</button>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="state active" id="state-idle">
+        <div class="idle-ring">📄</div>
+        <p class="idle-hint">Paste a resume and hit Analyze.<br>Results appear here.</p>
+      </div>
+
+      <div class="state" id="state-scanning">
+        <div class="scan-outer">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#1A2538" stroke-width="2.5"/>
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#4D9FFF" stroke-width="2.5"
+              stroke-dasharray="36 152" stroke-linecap="round"/>
+          </svg>
+          <div class="scan-inner">⚡</div>
+        </div>
+        <span class="scan-txt">Analyzing</span>
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="state" id="state-results">
+        <div class="meter-section">
+          <canvas id="meter" width="220" height="116"></canvas>
+          <div class="score-row">
+            <span class="score-big" id="score-big">0</span>
+            <span class="score-unit">%</span>
+          </div>
+          <div class="vbadge" id="vbadge"></div>
+          <div class="score-sub">AI likelihood score</div>
+        </div>
+
+        <div class="signals-wrap">
+          <span class="slabel">Signals detected</span>
+          <div id="slist"></div>
+        </div>
+
+        <div class="sum-wrap">
+          <div class="sumbox" id="sumbox"></div>
+        </div>
+
+        <div class="reset-wrap">
+          <button id="rbtn">← Analyze another resume</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div id="modal-bg">
+  <div class="modal">
+    <div class="modal-title">Anthropic API key</div>
+    <p class="modal-desc">
+      Realcheck uses the Claude API to analyze resumes. Your key is stored locally on your machine and never sent anywhere else.<br><br>
+      Get a key at <a href="#" id="apilink">console.anthropic.com</a>.
+    </p>
+    <input id="apikey-input" type="password" placeholder="sk-ant-…"/>
+    <span class="err" id="modal-err">Please enter a valid API key.</span>
+    <div class="modal-btns">
+      <button class="btn-sec" id="modal-cancel">Cancel</button>
+      <button class="btn-pri" id="modal-save">Save key</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const rinput = document.getElementById('rinput')
+const ccount = document.getElementById('ccount')
+const abtn = document.getElementById('abtn')
+const rbtn = document.getElementById('rbtn')
+const settingsBtn = document.getElementById('settings-btn')
+const modalBg = document.getElementById('modal-bg')
+const apikeyInput = document.getElementById('apikey-input')
+const modalErr = document.getElementById('modal-err')
+
+let apiKey = ''
+
+// ── Init ──
+async function init() {
+  apiKey = await window.realcheck.getApiKey()
+  if (!apiKey) openModal()
+}
+init()
+
+// ── Character count ──
+rinput.addEventListener('input', () => {
+  const n = rinput.value.length
+  ccount.textContent = n.toLocaleString() + ' character' + (n !== 1 ? 's' : '')
+})
+
+// ── State management ──
+function setState(s) {
+  ['idle', 'scanning', 'results'].forEach(id => {
+    const el = document.getElementById('state-' + id)
+    el.classList.toggle('active', id === s)
+  })
+}
+
+// ── Meter drawing ──
+function drawMeter(score, color) {
+  const canvas = document.getElementById('meter')
+  const ctx = canvas.getContext('2d')
+  const cx = 110, cy = 108, r = 88
+  let cur = Math.PI
+  const target = Math.PI + (score / 100) * Math.PI
+  const step = (target - Math.PI) / 45
+
+  function frame() {
+    cur = Math.min(cur + step, target)
+    ctx.clearRect(0, 0, 220, 116)
+
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI)
+    ctx.strokeStyle = '#1A2538'; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.stroke()
+
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, Math.PI, cur)
+    ctx.strokeStyle = color; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.stroke()
+
+    const nx = cx + Math.cos(cur) * r, ny = cy + Math.sin(cur) * r
+    ctx.beginPath(); ctx.arc(nx, ny, 4, 0, 2 * Math.PI)
+    ctx.fillStyle = '#fff'; ctx.fill()
+
+    ctx.font = '500 9px Inter,sans-serif'; ctx.fillStyle = '#3D506A'
+    ctx.textAlign = 'left'; ctx.fillText('Human', 24, 112)
+    ctx.textAlign = 'right'; ctx.fillText('AI', 200, 112)
+
+    if (cur < target) requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
+}
+
+function animateScore(target, color) {
+  const el = document.getElementById('score-big')
+  let cur = 0
+  const iv = setInterval(() => {
+    cur = Math.min(cur + Math.ceil(target / 35), target)
+    el.textContent = cur
+    el.style.color = color
+    if (cur >= target) clearInterval(iv)
+  }, 28)
+}
+
+// ── Render results ──
+function renderResults(data) {
+  const score = Math.round(data.score)
+  const color = score < 35 ? '#00D68F' : score < 65 ? '#F5A623' : '#FF4D6A'
+  const dimColor = score < 35 ? '#00291A' : score < 65 ? '#3D2800' : '#3D0010'
+
+  drawMeter(score, color)
+  animateScore(score, color)
+
+  const vb = document.getElementById('vbadge')
+  vb.style.background = dimColor; vb.style.color = color
+  vb.textContent = score < 35 ? '✓ Likely human-written' : score < 65 ? '⚠ Mixed signals' : '✕ Likely AI-generated'
+
+  const sl = document.getElementById('slist')
+  sl.innerHTML = ''
+  ;(data.signals || []).forEach((s, i) => {
+    const c = s.type === 'ai' ? '#FF4D6A' : s.type === 'human' ? '#00D68F' : '#F5A623'
+    const el = document.createElement('div')
+    el.className = 'sig'
+    el.style.animationDelay = (i * 80) + 'ms'
+    el.innerHTML = `<div class="sdot" style="background:${c}"></div><div class="stxt"><strong>${s.label}:</strong> ${s.detail}</div>`
+    sl.appendChild(el)
+  })
+
+  document.getElementById('sumbox').textContent = data.summary || ''
+  setState('results')
+}
+
+// ── Analyze ──
+abtn.addEventListener('click', async () => {
+  if (!apiKey) return openModal()
+  const text = rinput.value.trim()
+  if (text.length < 80) {
+    rinput.style.borderColor = '#3D0010'
+    setTimeout(() => rinput.style.borderColor = '', 900)
+    return
+  }
+  abtn.disabled = true
+  setState('scanning')
+  try {
+    const data = await window.realcheck.analyze(apiKey, text)
+    renderResults(data)
+  } catch (e) {
+    setState('idle')
+    alert('Analysis failed: ' + e.message)
+  } finally {
+    abtn.disabled = false
+  }
+})
+
+rbtn.addEventListener('click', () => {
+  rinput.value = ''
+  ccount.textContent = '0 characters'
+  setState('idle')
+})
+
+// ── API key modal ──
+function openModal() {
+  apikeyInput.value = apiKey || ''
+  modalErr.style.display = 'none'
+  modalBg.classList.add('open')
+  setTimeout(() => apikeyInput.focus(), 100)
+}
+
+settingsBtn.addEventListener('click', openModal)
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  modalBg.classList.remove('open')
+})
+
+document.getElementById('modal-save').addEventListener('click', async () => {
+  const val = apikeyInput.value.trim()
+  if (!val.startsWith('sk-ant-')) {
+    modalErr.style.display = 'block'
+    return
+  }
+  apiKey = val
+  await window.realcheck.saveApiKey(val)
+  modalBg.classList.remove('open')
+})
+
+document.getElementById('apilink').addEventListener('click', (e) => {
+  e.preventDefault()
+  // shell.openExternal is exposed via preload if needed
+})
+
+apikeyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('modal-save').click()
+})
+</script>
+</body>
+</html>
